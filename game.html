@@ -10,27 +10,42 @@ let canvas,
     ballSpeedX = 10,
     ballSpeedY = 4,
     paddle1Y = 250,
-    paddle2Y = 250
+    paddle2Y = 250,
+    player1score = 0
+    player2score = 0
 
 const paddle_height = 100
 const paddle_width = 10
+const winning_score = 3
+
+let showingWinScreen = false
+
+function handleMouseClick(evt) {
+  if (showingWinScreen) {
+    player1score = player2score = 0
+    showingWinScreen = false
+  }
+}
 
 window.onload = function() {
   canvas = document.getElementById('gameCanvas')
   canvasContext = canvas.getContext('2d')
 
-  var framesPerSecond = 30
+  let framesPerSecond = 30
   setInterval(function() {
     moveEverything()
     drawEverything()
   }, 1000/framesPerSecond)
 
-canvas.addEventListener('mousemove',
+  canvas.addEventListener('mousemove',
   function(evt) {
     let mousePos = calculateMousPos(evt)
-    paddle2Y = mousePos.y - (paddle_height / 2)
+    paddle1Y = mousePos.y - (paddle_height / 2)
   })
+
+  canvas.addEventListener('mousedown', handleMouseClick)
 }
+
 
 function calculateMousPos(evt) {
   rect = canvas.getBoundingClientRect(),
@@ -44,19 +59,42 @@ function calculateMousPos(evt) {
 }
 
 function ballReset() {
+  if (player1score >= winning_score || player2score >= winning_score) {
+    showingWinScreen = true
+  }
   ballSpeedX = -ballSpeedX
   ballX = canvas.width / 2
   ballY = canvas.height / 2
 }
 
+function computerMovement() {
+  let paddle2YCenter = paddle2Y + (paddle_height / 2)
+  if (paddle2YCenter < ballY - 35) {
+    paddle2Y += 6
+  } else {
+    paddle2Y -= 6
+  }
+}
+
 function moveEverything() {
+  if(showingWinScreen) { // pause game movement when a player wins
+    canvasContext.fillStyle = 'white'
+    canvasContext.fillText('CLICK TO CONTINUE', 260, 300)
+    return
+  }
+
+  computerMovement()
+
   ballX += ballSpeedX
   ballY += ballSpeedY
 
   if (ballX < paddle_width + 20) {
     if (ballY > paddle1Y && ballY < paddle1Y + paddle_height) {
       ballSpeedX = -ballSpeedX
+      let deltaY = ballY - paddle1Y + (paddle_height / 2)
+      ballSpeedY = deltaY * 0.1
     } else {
+      player2score++ // must be BEFORE ballReset()
       ballReset()
     }
   }
@@ -64,7 +102,10 @@ function moveEverything() {
   if (ballX > canvas.width - (paddle_width + 20)) {
     if (ballY > paddle2Y && ballY < paddle2Y + paddle_height) {
       ballSpeedX = -ballSpeedX
+      let deltaY = ballY - paddle2Y + (paddle_height / 2)
+      ballSpeedY = deltaY * 0.1
     } else {
+      player1score++ // must be BEFORE ballReset()
       ballReset()
     }
   }
@@ -76,17 +117,35 @@ function moveEverything() {
   }
 }
 
+function drawNet() {
+  for (let i = 0; i < canvas.height; i += 40) {
+    colorRect(canvas.width / 2 -1, i, 2, 20, 'orange')
+  }
+}
+
 function drawEverything() {
+
+  if (player1score >= winning_score) {
+    canvasContext.fillText('You Won!', 350, 200)
+  } else if (player2score >= winning_score) {
+    canvasContext.fillText('You got beat by...a computer :()', 190, 200)
+  return
+  }
   // drawing the background
   colorRect(0, 0, canvas.width, canvas.height, 'black')
+  // draw net down the middle
+  drawNet()
   // this is the left player paddle
-  colorRect(5, 250, paddle_width, paddle_height, 'white')
+  colorRect(5, paddle1Y, paddle_width, paddle_height, 'white')
   // this is the right computer paddle
   colorRect(canvas.width - (paddle_width + 5), paddle2Y, paddle_width, paddle_height, 'white')
   // this is the ball
   colorCircle(ballX, ballY, 5, 'red')
-
+  canvasContext.font = '25px Courier'
+  canvasContext.fillText(`PLAYER 1: ${player1score}`, 50, 50)
+  canvasContext.fillText(`PLAYER 2: ${player2score}`, canvas.width - 250, 50)
 }
+
 
 function colorCircle(centerX, centerY, radius, drawColor) {
   canvasContext.fillStyle = drawColor
