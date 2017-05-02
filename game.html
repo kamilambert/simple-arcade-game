@@ -1,0 +1,104 @@
+<html>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<script>
+let canvas,
+    canvasContext,
+    ballX = 50,
+    ballY = 50,
+    ballSpeedX = 10,
+    ballSpeedY = 4,
+    paddle1Y = 250,
+    paddle2Y = 250
+
+const paddle_height = 100
+const paddle_width = 10
+
+window.onload = function() {
+  canvas = document.getElementById('gameCanvas')
+  canvasContext = canvas.getContext('2d')
+
+  var framesPerSecond = 30
+  setInterval(function() {
+    moveEverything()
+    drawEverything()
+  }, 1000/framesPerSecond)
+
+canvas.addEventListener('mousemove',
+  function(evt) {
+    let mousePos = calculateMousPos(evt)
+    paddle2Y = mousePos.y - (paddle_height / 2)
+  })
+}
+
+function calculateMousPos(evt) {
+  rect = canvas.getBoundingClientRect(),
+  root = document.documentElement,
+  mouseX = evt.clientX - rect.left - root.scrollLeft,
+  mouseY = evt.clientY - rect.top - root.scrollTop
+  return {
+    x: mouseX,
+    y: mouseY
+  }
+}
+
+function ballReset() {
+  ballSpeedX = -ballSpeedX
+  ballX = canvas.width / 2
+  ballY = canvas.height / 2
+}
+
+function moveEverything() {
+  ballX += ballSpeedX
+  ballY += ballSpeedY
+
+  if (ballX < paddle_width + 20) {
+    if (ballY > paddle1Y && ballY < paddle1Y + paddle_height) {
+      ballSpeedX = -ballSpeedX
+    } else {
+      ballReset()
+    }
+  }
+
+  if (ballX > canvas.width - (paddle_width + 20)) {
+    if (ballY > paddle2Y && ballY < paddle2Y + paddle_height) {
+      ballSpeedX = -ballSpeedX
+    } else {
+      ballReset()
+    }
+  }
+  if (ballY > canvas.height) {
+    ballSpeedY = -ballSpeedY
+  }
+  if (ballY < 0) {
+    ballSpeedY = -ballSpeedY
+  }
+}
+
+function drawEverything() {
+  // drawing the background
+  colorRect(0, 0, canvas.width, canvas.height, 'black')
+  // this is the left player paddle
+  colorRect(5, 250, paddle_width, paddle_height, 'white')
+  // this is the right computer paddle
+  colorRect(canvas.width - (paddle_width + 5), paddle2Y, paddle_width, paddle_height, 'white')
+  // this is the ball
+  colorCircle(ballX, ballY, 5, 'red')
+
+}
+
+function colorCircle(centerX, centerY, radius, drawColor) {
+  canvasContext.fillStyle = drawColor
+  canvasContext.beginPath()
+  canvasContext.arc(centerX, centerY, radius, 0, Math.PI*2, true)
+  canvasContext.fill()
+}
+
+function colorRect(leftX, topY, width, height, drawColor) {
+  canvasContext.fillStyle = drawColor
+  canvasContext.fillRect(leftX, topY, width, height)
+}
+
+</script>
+</html>
